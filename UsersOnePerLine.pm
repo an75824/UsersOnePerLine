@@ -63,12 +63,16 @@ sub convert_input
 
 	my $session = $plugin->{session};
 	my $user_dataset = $session->get_archive()->get_dataset( "user" );
-	my $searchexp = new EPrints::SearchExpression( session=>$session, dataset=>$user_dataset );
-	$searchexp->add_field( $user_dataset->get_field( "username" ), $vals[0]);
-	my $searchid = $searchexp->perform_search;
-	my( $user ) = $searchexp->get_records;
-	$searchexp->dispose();
-	#print STDERR "The user: $user\n";
+	my $list = $user_dataset->search(search_fields =>  [ { meta_fields => [qw(username )], value => $vals[0], }]);
+	my $searchexp1 = $user_dataset->prepare_search();
+	$searchexp1->add_field(
+			fields => [
+			$user_dataset->field('username')
+    			],
+		value => $vals[0],
+  	);
+	my $list = $searchexp1->perform_search;
+	my $count = $list->count;
 	my $epdata = {
                         username   => $vals[0],
                         usertype   => $vals[1],
@@ -76,21 +80,14 @@ sub convert_input
                         name       => { given=>$vals[3], family=>$vals[4] },
                         dept => $vals[5],
                  };
-	if( !defined $user )
-	{
 
-	#my $epdata = {	
-	#		username   => $vals[0],
-	#		usertype   => $vals[1],
-	#		email      => $vals[2],
-	#		name	   => { given=>$vals[3], family=>$vals[4] },
-	#		dept => $vals[5],
-	#	 };
-	
-	return $epdata;
-	} else {
-		print STDERR "**User already in the DB, no action taken for: $vals[0]\n";
+	if ($count gt 0)
+	{
+		print STDERR "*User already exists in the DB: $vals[0], times: $count\n";
 		return undef;
+	} else {
+		print STDERR "__User $vals[0] imported in the DB\n";
+		return $epdata;
 	}
 }
 
