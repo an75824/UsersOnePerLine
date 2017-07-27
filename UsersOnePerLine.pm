@@ -71,7 +71,7 @@ sub convert_input
     			],
 		value => $vals[0],
   	);
-	my $list = $searchexp1->perform_search;
+	$list = $searchexp1->perform_search;
 	my $count = $list->count;
 	my $epdata = {
                         username   => $vals[0],
